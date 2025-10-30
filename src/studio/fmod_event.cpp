@@ -239,8 +239,8 @@ void FmodEvent::set_callback(const Callable& callback, uint32_t p_callback_mask)
     ERROR_CHECK(_wrapped->setCallback(Callbacks::event_callback, p_callback_mask));
 }
 
-void FmodEvent::set_programmer_callback(const String& p_programmers_callback_sound_key) {
-    programmers_callback_sound_key = p_programmers_callback_sound_key;
+void FmodEvent::set_programmer_callback_file(const Ref<FmodFile> p_programmer_callback_file) {
+    programmer_callback_file = p_programmer_callback_file;
     ERROR_CHECK(_wrapped->setCallback(Callbacks::event_callback, callback_mask | FMOD_STUDIO_EVENT_CALLBACK_CREATE_PROGRAMMER_SOUND | FMOD_STUDIO_EVENT_CALLBACK_DESTROY_PROGRAMMER_SOUND));
 }
 
@@ -248,8 +248,8 @@ const Callable& FmodEvent::get_callback() const {
     return eventCallback;
 }
 
-const String& FmodEvent::get_programmers_callback_sound_key() const {
-    return programmers_callback_sound_key;
+const Ref<FmodFile> FmodEvent::get_programmer_callback_file() const {
+    return programmer_callback_file;
 }
 
 void FmodEvent::set_distance_scale(float scale){

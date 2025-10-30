@@ -15,16 +15,13 @@ namespace Callbacks {
         instance->getUserData((void**) &event_instance);
         if (event_instance) {
             if (type == FMOD_STUDIO_EVENT_CALLBACK_CREATE_PROGRAMMER_SOUND) {
-                const godot::String& sound_key {event_instance->get_programmers_callback_sound_key()};
-                FMOD_STUDIO_SOUND_INFO sound_info {godot::FmodServer::get_singleton()->get_sound_info(sound_key)};
-                FMOD::Sound* sound {
-                        godot::FmodServer::get_singleton()->create_sound(sound_info, FMOD_LOOP_NORMAL | FMOD_CREATECOMPRESSEDSAMPLE | FMOD_NONBLOCKING)
-                };
+                const godot::FmodFile& sound {event_instance->get_programmer_callback_file()};
+                FMOD::Sound* sound = sound->get_wrapped();
 
                 auto* props { reinterpret_cast<FMOD_STUDIO_PROGRAMMER_SOUND_PROPERTIES*>(parameters) };
 
                 props->sound = (FMOD_SOUND*) sound;
-                props->subsoundIndex = sound_info.subsoundindex;
+                props->subsoundIndex = -1; // this is also hard coded and might need fixed if i ever do subsound stuff. i doubt it though
 
                 return FMOD_OK;
             }

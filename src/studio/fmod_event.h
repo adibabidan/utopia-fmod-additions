@@ -10,7 +10,7 @@ namespace godot {
         FMODCLASS(FmodEvent, RefCounted, FMOD::Studio::EventInstance);
 
         Callable eventCallback;
-        String programmers_callback_sound_key;
+        Ref<FmodFile> programmer_callback_file;
         float distanceScale = 1.0f;
         uint32_t callback_mask;
 
@@ -52,8 +52,8 @@ namespace godot {
         void set_node_attributes(Node* node) const;
         void set_callback(const Callable& callback, uint32_t p_callback_mask);
         const Callable& get_callback() const;
-        void set_programmer_callback(const String& p_programmers_callback_sound_key);
-        const String& get_programmers_callback_sound_key() const;
+        void set_programmer_callback(const Ref<FmodFile> p_programmer_callback_file);
+        const String& get_programmer_callback_file() const;
         void set_distance_scale(float scale);
 
     protected:

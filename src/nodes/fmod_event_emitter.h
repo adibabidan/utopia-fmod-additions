@@ -77,7 +77,7 @@ namespace godot {
         void set_volume(float volume);
         float get_volume() const;
 
-        void set_programmer_callback(const String& p_programmers_callback_sound_key);
+        void set_programmer_callback_file(const Ref<FmodFile> p_programmer_callback_file);
 
 #ifdef TOOLS_ENABLED
         void tool_remove_all_parameters();
