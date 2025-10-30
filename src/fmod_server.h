@@ -221,6 +221,7 @@ namespace godot {
         // SOUNDS
         Ref<FmodFile> load_file_as_sound(const String& path);
         Ref<FmodFile> load_file_as_music(const String& path);
+        Ref<FmodFile> create_file_as_writable_sound(const int sample_rate);
         void unload_file(const String& path);
         Ref<FmodSound> create_sound_instance(const String& path);
         FMOD_STUDIO_SOUND_INFO get_sound_info(const String& sound_key) const;

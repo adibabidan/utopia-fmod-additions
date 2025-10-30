@@ -99,6 +99,7 @@ void FmodServer::_bind_methods() {
 
     ClassDB::bind_method(D_METHOD("load_file_as_sound", "path"), &FmodServer::load_file_as_sound);
     ClassDB::bind_method(D_METHOD("load_file_as_music", "path"), &FmodServer::load_file_as_music);
+    ClassDB::bind_method(D_Method("create_file_as_writable_sound", "sample_rate"), &FmodServer::create_file_as_writable_sound)
     ClassDB::bind_method(D_METHOD("unload_file", "path"), &FmodServer::unload_file);
 
     ClassDB::bind_method(D_METHOD("create_event_instance_with_guid", "guid"), &FmodServer::create_event_instance_with_guid);
@@ -134,6 +135,7 @@ void FmodServer::_bind_methods() {
     ClassDB::bind_method(D_METHOD("unmute_all_events"), &FmodServer::unmute_all_events);
 
     ClassDB::bind_method(D_METHOD("create_sound_instance", "path"), &FmodServer::create_sound_instance);
+    ClassDB::bind_method(D_METHOD("create_sound_file", "name", "mode", "exinfo"), &FmodServer::create_sound_file)
     REGISTER_ALL_CONSTANTS
 }
 
@@ -856,6 +858,28 @@ Ref<FmodFile> FmodServer::load_file_as_music(const String& path) {
         return cache->get_file(path);
     }
     return cache->add_file(path, (FMOD_CREATESTREAM | FMOD_LOOP_NORMAL));
+}
+
+Ref<FmodFile> FmodServer::create_file_as_writable_sound(const int sample_rate) {
+    FMOD::System* core = nullptr;
+    ERROR_CHECK(system->getCoreSystem(&core));
+
+    // hard coded because steam audio always returns 1 channel 16 bit PCM
+    FMOD_CREATESOUNDEXINFO exinfo = {0};
+    exinfo.cbsize           = sizeof(FMOD_CREATESOUNDEXINFO);
+    exinfo.numchannels      = 1;
+    exinfo.format           = FMOD_SOUND_FORMAT_PCM16;
+    exinfo.defaultfrequency = sample_rate;
+    exinfo.length           = sample_rate * sizeof(short) * 1; // sample_rate * sizeof(short) [16 bit] * 1 channel = 1 second of audio buffer
+
+    FMOD::Sound* sound = nullptr;
+    ERROR_CHECK_WITH_REASON(core->createSound("", (FMOD_OPENUSER | FMOD_LOOP_NORMAL), exinfo, &sound), vformat("Cannot create writable sound"));
+    if (sound) {
+        Ref<FmodFile> ref = FmodFile::create_ref(sound);
+        GODOT_LOG_VERBOSE("FMOD Sound System: CREATING WRITABLE SOUND")
+        return ref;
+    }
+    return {};
 }
 
 void FmodServer::unload_file(const String& path) {
