@@ -15,8 +15,7 @@ namespace Callbacks {
         instance->getUserData((void**) &event_instance);
         if (event_instance) {
             if (type == FMOD_STUDIO_EVENT_CALLBACK_CREATE_PROGRAMMER_SOUND) {
-                const godot::FmodFile& sound {event_instance->get_programmer_callback_file()};
-                FMOD::Sound* sound = sound->get_wrapped();
+                const FMOD::Sound* sound {event_instance->get_programmer_callback_file()->get_wrapped()};
 
                 auto* props { reinterpret_cast<FMOD_STUDIO_PROGRAMMER_SOUND_PROPERTIES*>(parameters) };
 

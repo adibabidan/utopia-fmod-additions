@@ -1,5 +1,7 @@
 #include "fmod_file.h"
 
+#include "helpers/common.h"
+
 using namespace godot;
 
 void FmodFile::_bind_methods()

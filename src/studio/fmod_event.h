@@ -4,6 +4,7 @@
 #include "classes/ref_counted.hpp"
 #include "fmod_studio.hpp"
 #include "helpers/common.h"
+#include "core/fmod_file.h"
 
 namespace godot {
     class FmodEvent : public RefCounted {
@@ -52,8 +53,8 @@ namespace godot {
         void set_node_attributes(Node* node) const;
         void set_callback(const Callable& callback, uint32_t p_callback_mask);
         const Callable& get_callback() const;
-        void set_programmer_callback(const Ref<FmodFile> p_programmer_callback_file);
-        const String& get_programmer_callback_file() const;
+        void set_programmer_callback(const Ref<FmodFile>& p_programmer_callback_file);
+        Ref<FmodFile> get_programmer_callback_file() const;
         void set_distance_scale(float scale);
 
     protected:
