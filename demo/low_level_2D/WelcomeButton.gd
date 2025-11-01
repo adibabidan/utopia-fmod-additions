@@ -13,6 +13,6 @@ func _ready():
 func _on_pressed():
 	if welcome_option_button.lang_bank == null:
 		return
-	var event_instance = FmodServer.create_event_instance("event:/Character/Dialogue")
-	event_instance.set_programmer_callback("welcome")
-	event_instance.start()
+# 	var event_instance = FmodServer.create_event_instance("event:/Character/Dialogue")
+# 	event_instance.set_programmer_callback("welcome")
+# 	event_instance.start()

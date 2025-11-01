@@ -9,6 +9,7 @@ namespace godot {
         GDCLASS(FmodFile, RefCounted);
 
         FMOD::Sound* _wrapped = nullptr;
+        unsigned int write_offset = 0;
 
     public:
         inline static Ref<FmodFile> create_ref(FMOD::Sound* wrapped) {
@@ -29,9 +30,10 @@ namespace godot {
     public:
         unsigned int get_length(FMOD_TIMEUNIT lengthtype) const;
         bool release() const;
-        PackedByteArray read_data(unsigned int length) const;
-        TypedArray<PackedByteArray> lock(unsigned int offset, unsigned int length) const;
-        bool unlock(PackedByteArray byte_arr_1, PackedByteArray byte_arr_2) const;
+        // Ref<PackedByteArray> read_data(unsigned int length) const;
+        // int write_data(const PackedByteArray& audio_data);
+        /* TypedArray<PackedByteArray> lock(unsigned int offset, unsigned int length) const;
+        bool unlock(PackedByteArray byte_arr_1, PackedByteArray byte_arr_2) const; */
     };
 }// namespace godot
 

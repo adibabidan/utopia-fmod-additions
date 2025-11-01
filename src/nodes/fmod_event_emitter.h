@@ -34,7 +34,8 @@ namespace godot {
         Ref<FmodEvent> _event;
 
         String _event_name;
-        Ref<FmodFile> _programmer_callback_file;
+        FMOD::Sound* _programmer_callback_file;
+        unsigned int write_offset = 0;
         LocalVector<Parameter> _parameters;
         FMOD_GUID _event_guid;
         float _volume = 1.0;
@@ -78,6 +79,8 @@ namespace godot {
         void set_volume(float volume);
         float get_volume() const;
 
+        Ref<FmodFile> setup_programmer_instrument_sound(unsigned int sample_rate);
+        int write_to_programmer_instrument_sound(const PackedByteArray& audio_data);
         void set_programmer_callback(const Ref<FmodFile>& p_programmer_callback_file);
 
 #ifdef TOOLS_ENABLED
@@ -553,8 +556,74 @@ namespace godot {
     }
 
     template<class Derived, class NodeType>
+    Ref<FmodFile> FmodEventEmitter<Derived, NodeType>::setup_programmer_instrument_sound(unsigned int sample_rate) {
+       
+        _programmer_callback_file = FmodServer::get_singleton()->create_file_as_writable_sound(sample_rate);
+
+        if(_programmer_callback_file)
+        {
+            Ref<FmodFile> ref = FmodFile::create_ref(_programmer_callback_file);
+            UtilityFunctions::push_warning(String("CREATED WRITABLE SOUND"));
+            return ref;
+        }
+        return {};
+    }
+
+    template<class Derived, class NodeType>
+    int FmodEventEmitter<Derived, NodeType>::write_to_programmer_instrument_sound(const PackedByteArray& audio_data) {
+        unsigned int length = audio_data.size();
+
+        void* ptr1;
+        void* ptr2;
+        unsigned int len1, len2;
+
+        if(ERROR_CHECK(_programmer_callback_file->lock(write_offset, length, &ptr1, &ptr2, &len1, &len2)))
+        {
+            int* data_chunk_1 = (int*) audio_data.ptr();
+            int* data_chunk_2 = nullptr;
+            if(len2 > 0)
+            {
+                data_chunk_2 = data_chunk_1 + len1;
+            }
+            if(ERROR_CHECK(_programmer_callback_file->unlock(data_chunk_1, data_chunk_2, len1, len2)))
+            {
+                if(len2 > 0)
+                {
+                    write_offset = len2;
+                }
+                else
+                {
+                    write_offset += len1;
+
+                    unsigned int sound_length{};
+                    ERROR_CHECK(_programmer_callback_file->getLength(&sound_length, FMOD_TIMEUNIT_PCM));
+
+                    if(write_offset > sound_length)
+                    {
+                        write_offset -= sound_length;
+                    }
+
+                    void* debug_ptr = new char[length];
+                    unsigned int debug_read;
+
+                    FMOD_RESULT error = _programmer_callback_file->readData(debug_ptr, length, &debug_read);
+                    if(error != FMOD_ERR_FILE_EOF)
+                    {
+                        ERROR_CHECK(error);
+                    }
+
+                    UtilityFunctions::push_warning(String((char*) debug_ptr));
+                }
+                return write_offset;
+            }
+            return -2;
+        }
+        return -1;
+    }
+
+    template<class Derived, class NodeType>
     void FmodEventEmitter<Derived, NodeType>::set_programmer_callback(const Ref<FmodFile>& p_programmers_callback_file) {
-        _programmer_callback_file = p_programmers_callback_file;
+        _programmer_callback_file = p_programmers_callback_file->get_wrapped();
     }
 
     template<class Derived, class NodeType>
@@ -868,6 +937,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("is_preload_event"), &Derived::is_preload_event);
         ClassDB::bind_method(D_METHOD("get_volume"), &Derived::get_volume);
         ClassDB::bind_method(D_METHOD("set_volume", "p_volume"), &Derived::set_volume);
+        ClassDB::bind_method(D_METHOD("setup_programmer_instrument_sound", "sample_rate"), &Derived::setup_programmer_instrument_sound);
+        ClassDB::bind_method(D_METHOD("write_to_programmer_instrument_sound", "audio_data"), &Derived::write_to_programmer_instrument_sound);
         ClassDB::bind_method(D_METHOD("set_programmer_callback", "p_programmers_callback_file"), &Derived::set_programmer_callback);
         ClassDB::bind_method(D_METHOD("_emit_callbacks", "dict", "type"), &Derived::_emit_callbacks);
 

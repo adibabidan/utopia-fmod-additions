@@ -8,9 +8,10 @@ void FmodFile::_bind_methods()
 {
     ClassDB::bind_method(D_METHOD("get_length", "lengthtype"), &FmodFile::get_length);
     ClassDB::bind_method(D_METHOD("release"), &FmodFile::release);
-    ClassDB::bind_method(D_METHOD("read_data", "length"), &FmodFile::read_data);
-    ClassDB::bind_method(D_METHOD("lock", "offset", "length"), &FmodFile::lock);
-    ClassDB::bind_method(D_METHOD("unlock", "byte_arr_1", "byte_arr_2"), &FmodFile::unlock);
+    // ClassDB::bind_method(D_METHOD("read_data", "length"), &FmodFile::read_data);
+    // ClassDB::bind_method(D_METHOD("write_data", "audio_data"), &FmodFile::write_data);
+    /*ClassDB::bind_method(D_METHOD("lock", "offset", "length"), &FmodFile::lock);
+    ClassDB::bind_method(D_METHOD("unlock", "byte_arr_1", "byte_arr_2"), &FmodFile::unlock);*/
 }
 
 unsigned int FmodFile::get_length(FMOD_TIMEUNIT lengthtype) const
@@ -30,7 +31,7 @@ bool FmodFile::release() const
     return ERROR_CHECK(_wrapped->release());
 }
 
-PackedByteArray FmodFile::read_data(unsigned int length) const
+/* PackedByteArray FmodFile::read_data(unsigned int length) const
 {
     void* ptr = new char[length];
     unsigned int read;
@@ -46,9 +47,47 @@ PackedByteArray FmodFile::read_data(unsigned int length) const
 
     memcpy(data.begin().operator->(), ptr, data.size());
     return data;
-}
+}*/
 
-TypedArray<PackedByteArray> FmodFile::lock(unsigned int offset, unsigned int length) const
+/*int FmodFile::write_data(const PackedByteArray& audio_data)
+{
+    unsigned int length = audio_data.size();
+
+    void* ptr1;
+    void* ptr2;
+    unsigned int len1, len2;
+
+    if(ERROR_CHECK(_wrapped->lock(write_offset, length, &ptr1, &ptr2, &len1, &len2)))
+    {
+        int* data_chunk_1 = (int*) audio_data.ptr();
+        int* data_chunk_2 = nullptr;
+        if(len2 > 0)
+        {
+            data_chunk_2 = data_chunk_1 + len1;
+        }
+        if(ERROR_CHECK(_wrapped->unlock(data_chunk_1, data_chunk_2, len1, len2)))
+        {
+            if(len2 > 0)
+            {
+                write_offset = len2;
+            }
+            else
+            {
+                write_offset += len1;
+                unsigned int sound_length = get_length(FMOD_TIMEUNIT_PCM);
+                if(write_offset > sound_length)
+                {
+                    write_offset -= sound_length;
+                }
+            }
+            return write_offset;
+        }
+        return -2;
+    }
+    return -1;
+}*/
+
+/*TypedArray<PackedByteArray> FmodFile::lock(unsigned int offset, unsigned int length) const
 {
     TypedArray<PackedByteArray> ret_array = new TypedArray<PackedByteArray>();
 
@@ -60,6 +99,12 @@ TypedArray<PackedByteArray> FmodFile::lock(unsigned int offset, unsigned int len
     {
         PackedByteArray arr1;
         arr1.resize(len1);
+
+        char len1_buffer [33];
+        itoa(len1, len1_buffer, 10);
+        char len2_buffer [33];
+        itoa(len2, len2_buffer, 10);
+        UtilityFunctions::push_warning("[LOCK] len1: " + String(len1_buffer) + ", len2: " + String(len2_buffer));
 
         memcpy(arr1.begin().operator->(), ptr1, arr1.size());
         ret_array.append(arr1);
@@ -97,7 +142,14 @@ bool FmodFile::unlock(PackedByteArray byte_arr_1, PackedByteArray byte_arr_2) co
         char arr1_char[64];
     }
 
+
+    char len1_buffer [33];
+    itoa(byte_arr_1.size(), len1_buffer, 10);
+    char len2_buffer [33];
+    itoa(byte_arr_2.size(), len2_buffer, 10);
+    UtilityFunctions::push_warning("[UNLOCK] len1: " + String(len1_buffer) + ", len2: " + String(len2_buffer));
+
     bool res = ERROR_CHECK(_wrapped->unlock(byte_arr_1.begin().operator->(), byte_arr_2.begin().operator->(), arr1_size, arr2_size));
 
     return res;
-}
+}*/
