@@ -240,6 +240,7 @@ void FmodEvent::set_callback(const Callable& callback, uint32_t p_callback_mask)
 }
 
 void FmodEvent::set_programmer_callback(FMOD::Sound* p_programmer_callback_file) {
+    UtilityFunctions::push_warning("SETTING PROGRAMMER CALLBACK");
     programmer_callback_file = p_programmer_callback_file;
     ERROR_CHECK_WITH_REASON(_wrapped->setCallback(Callbacks::event_callback, FMOD_STUDIO_EVENT_CALLBACK_ALL), "SET PROGRAMMER CALLBACK FAILED");
 }

@@ -859,9 +859,13 @@ Ref<FmodFile> FmodServer::load_file_as_music(const String& path) {
     return cache->add_file(path, (FMOD_CREATESTREAM | FMOD_LOOP_NORMAL));
 }
 
-FMOD::Sound* FmodServer::create_file_as_writable_sound(int sample_rate) {
+Ref<FmodFile> FmodServer::create_file_as_writable_sound(int sample_rate) {
     FMOD::System* core = nullptr;
     ERROR_CHECK(system->getCoreSystem(&core));
+
+    UtilityFunctions::push_warning("in create file");
+
+    Ref<FmodFile> ref;// = FmodFile::create_ref(nullptr);
 
     // hard coded because steam audio always returns 1 channel 16 bit PCM
     FMOD_CREATESOUNDEXINFO exinfo = {0};
@@ -870,10 +874,18 @@ FMOD::Sound* FmodServer::create_file_as_writable_sound(int sample_rate) {
     exinfo.format           = FMOD_SOUND_FORMAT_PCM16;
     exinfo.defaultfrequency = sample_rate;
     exinfo.length           = sample_rate * sizeof(short) * 1; // sample_rate * sizeof(short) [16 bit] * 1 channel = 1 second of audio buffer
+    exinfo.pcmreadcallback  = Callbacks::pcm_read_callback;
+    //exinfo.userdata         = &ref;
 
     FMOD::Sound* sound = nullptr;
     ERROR_CHECK_WITH_REASON(core->createSound("", (FMOD_OPENUSER | FMOD_LOOP_NORMAL), &exinfo, &sound), vformat("Cannot create writable sound"));
-    return sound;
+
+    if (sound) {
+        ref = FmodFile::create_ref(sound);
+        UtilityFunctions::push_warning("sound created");
+        return ref;
+    }
+    return ref;
 }
 
 void FmodServer::unload_file(const String& path) {

@@ -80,7 +80,7 @@ namespace godot {
         float get_volume() const;
 
         Ref<FmodFile> setup_programmer_instrument_sound(unsigned int sample_rate);
-        int write_to_programmer_instrument_sound(const PackedByteArray& audio_data);
+        // int write_to_programmer_instrument_sound(const PackedByteArray& audio_data);
         void set_programmer_callback(const Ref<FmodFile>& p_programmer_callback_file);
 
 #ifdef TOOLS_ENABLED
@@ -246,13 +246,18 @@ namespace godot {
         if (is_one_shot) {
             event = _create_event();
         } else {
-            if (_event.is_null() || !_event->is_valid()) { _load_event(); }
+            if (_event.is_null() || !_event->is_valid())
+            {
+                _load_event();
+                UtilityFunctions::push_warning("loading event");
+            }
 
             event = _event;
         }
 
         if (event.is_null()) {
             // No event loaded, nothing to do here
+            UtilityFunctions::push_warning("no event");
             return;
         }
 
@@ -261,6 +266,7 @@ namespace godot {
 
         set_space_attribute(event);
         if (_programmer_callback_file != nullptr) {
+            UtilityFunctions::push_warning("setting programmer callback");
             event->set_programmer_callback(_programmer_callback_file);
         }
 
@@ -558,18 +564,18 @@ namespace godot {
     template<class Derived, class NodeType>
     Ref<FmodFile> FmodEventEmitter<Derived, NodeType>::setup_programmer_instrument_sound(unsigned int sample_rate) {
        
-        _programmer_callback_file = FmodServer::get_singleton()->create_file_as_writable_sound(sample_rate);
-
-        if(_programmer_callback_file)
+        Ref<FmodFile> sound = FmodServer::get_singleton()->create_file_as_writable_sound(sample_rate);
+        if(!sound.is_null())
         {
-            Ref<FmodFile> ref = FmodFile::create_ref(_programmer_callback_file);
-            UtilityFunctions::push_warning(String("CREATED WRITABLE SOUND"));
-            return ref;
+            _programmer_callback_file = sound->get_wrapped();
         }
-        return {};
+
+        UtilityFunctions::push_warning("out of create file");
+
+        return sound;
     }
 
-    template<class Derived, class NodeType>
+    /*template<class Derived, class NodeType>
     int FmodEventEmitter<Derived, NodeType>::write_to_programmer_instrument_sound(const PackedByteArray& audio_data) {
         unsigned int length = audio_data.size();
 
@@ -579,13 +585,12 @@ namespace godot {
 
         if(ERROR_CHECK(_programmer_callback_file->lock(write_offset, length, &ptr1, &ptr2, &len1, &len2)))
         {
-            int* data_chunk_1 = (int*) audio_data.ptr();
-            int* data_chunk_2 = nullptr;
-            if(len2 > 0)
-            {
-                data_chunk_2 = data_chunk_1 + len1;
-            }
-            if(ERROR_CHECK(_programmer_callback_file->unlock(data_chunk_1, data_chunk_2, len1, len2)))
+            FMOD_RESULT error_check_value;
+
+            if(len2 == 0) { error_check_value = _programmer_callback_file->unlock((void*) audio_data.ptr(), nullptr, len1, len2); }
+            else { error_check_value = _programmer_callback_file->unlock((void*) audio_data.ptr(), (void*) (audio_data.ptr() + len1), len1, len2); }
+            
+            if(ERROR_CHECK(error_check_value))
             {
                 if(len2 > 0)
                 {
@@ -602,24 +607,22 @@ namespace godot {
                     {
                         write_offset -= sound_length;
                     }
-
-                    void* debug_ptr = new char[length];
-                    unsigned int debug_read;
-
-                    FMOD_RESULT error = _programmer_callback_file->readData(debug_ptr, length, &debug_read);
-                    if(error != FMOD_ERR_FILE_EOF)
-                    {
-                        ERROR_CHECK(error);
-                    }
-
-                    UtilityFunctions::push_warning(String((char*) debug_ptr));
                 }
+
+                char debug_string[128];
+                FMOD_OPENSTATE open_state = FMOD_OPENSTATE_ERROR;
+                unsigned int percent_buffered = 0;
+                bool starving = true;
+                bool disk_busy = true;
+                _programmer_callback_file->getOpenState(&open_state, &percent_buffered, &starving, &disk_busy);
+                sprintf(debug_string, "open_state %i, percent_buffered %u, starving %s, disk_busy %s", static_cast<std::underlying_type<FMOD_OPENSTATE>::type>(open_state), percent_buffered, starving ? "true" : "false", disk_busy ? "true" : "false");
+                UtilityFunctions::push_warning(debug_string);
                 return write_offset;
             }
             return -2;
         }
         return -1;
-    }
+    }*/
 
     template<class Derived, class NodeType>
     void FmodEventEmitter<Derived, NodeType>::set_programmer_callback(const Ref<FmodFile>& p_programmers_callback_file) {
@@ -938,7 +941,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_volume"), &Derived::get_volume);
         ClassDB::bind_method(D_METHOD("set_volume", "p_volume"), &Derived::set_volume);
         ClassDB::bind_method(D_METHOD("setup_programmer_instrument_sound", "sample_rate"), &Derived::setup_programmer_instrument_sound);
-        ClassDB::bind_method(D_METHOD("write_to_programmer_instrument_sound", "audio_data"), &Derived::write_to_programmer_instrument_sound);
+        // ClassDB::bind_method(D_METHOD("write_to_programmer_instrument_sound", "audio_data"), &Derived::write_to_programmer_instrument_sound);
         ClassDB::bind_method(D_METHOD("set_programmer_callback", "p_programmers_callback_file"), &Derived::set_programmer_callback);
         ClassDB::bind_method(D_METHOD("_emit_callbacks", "dict", "type"), &Derived::_emit_callbacks);
 

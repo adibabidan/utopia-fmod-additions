@@ -31,6 +31,8 @@ namespace Callbacks {
                 props->sound = (FMOD_SOUND*) sound;
                 props->subsoundIndex = -1; // this is also hard coded and might need fixed if i ever do subsound stuff. i doubt it though
 
+                godot::UtilityFunctions::push_warning(debug_string);
+
                 return FMOD_OK;
             }
             else if (type == FMOD_STUDIO_EVENT_CALLBACK_DESTROY_PROGRAMMER_SOUND) {
@@ -39,6 +41,8 @@ namespace Callbacks {
                 auto* sound {(FMOD::Sound*) props->sound};
 
                 ERROR_CHECK(sound->release());
+
+                godot::UtilityFunctions::push_warning(debug_string);
 
                 return FMOD_OK;
             }
@@ -73,6 +77,17 @@ namespace Callbacks {
 
         godot::UtilityFunctions::push_warning(debug_string);
 
+        return FMOD_OK;
+    }
+
+    FMOD_RESULT F_CALL pcm_read_callback(FMOD_SOUND* p_sound, void* data, unsigned int datalen) {
+        FMOD::Sound* sound = (FMOD::Sound*) p_sound;
+        godot::FmodFile* file;
+        sound->getUserData((void**) &file);
+        if(file){
+            if(file->pop_from_buffer(data, datalen) != 0) { godot::UtilityFunctions::push_error("pcmreadcallback called with insufficient audio buffer"); }
+        }
+        else { godot::UtilityFunctions::push_warning("pcm bad userdata"); }
         return FMOD_OK;
     }
 }// namespace Callbacks

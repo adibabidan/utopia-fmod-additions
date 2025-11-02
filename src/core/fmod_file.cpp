@@ -1,6 +1,7 @@
 #include "fmod_file.h"
 
 #include "helpers/common.h"
+#include <deque>
 
 using namespace godot;
 
@@ -9,7 +10,7 @@ void FmodFile::_bind_methods()
     ClassDB::bind_method(D_METHOD("get_length", "lengthtype"), &FmodFile::get_length);
     ClassDB::bind_method(D_METHOD("release"), &FmodFile::release);
     // ClassDB::bind_method(D_METHOD("read_data", "length"), &FmodFile::read_data);
-    // ClassDB::bind_method(D_METHOD("write_data", "audio_data"), &FmodFile::write_data);
+    ClassDB::bind_method(D_METHOD("write_data", "audio_data"), &FmodFile::write_data);
     /*ClassDB::bind_method(D_METHOD("lock", "offset", "length"), &FmodFile::lock);
     ClassDB::bind_method(D_METHOD("unlock", "byte_arr_1", "byte_arr_2"), &FmodFile::unlock);*/
 }
@@ -31,7 +32,7 @@ bool FmodFile::release() const
     return ERROR_CHECK(_wrapped->release());
 }
 
-/* PackedByteArray FmodFile::read_data(unsigned int length) const
+/*PackedByteArray FmodFile::read_data(unsigned int length) const
 {
     void* ptr = new char[length];
     unsigned int read;
@@ -49,43 +50,39 @@ bool FmodFile::release() const
     return data;
 }*/
 
-/*int FmodFile::write_data(const PackedByteArray& audio_data)
+void FmodFile::write_data(const PackedByteArray& audio_data)
 {
-    unsigned int length = audio_data.size();
-
-    void* ptr1;
-    void* ptr2;
-    unsigned int len1, len2;
-
-    if(ERROR_CHECK(_wrapped->lock(write_offset, length, &ptr1, &ptr2, &len1, &len2)))
-    {
-        int* data_chunk_1 = (int*) audio_data.ptr();
-        int* data_chunk_2 = nullptr;
-        if(len2 > 0)
-        {
-            data_chunk_2 = data_chunk_1 + len1;
-        }
-        if(ERROR_CHECK(_wrapped->unlock(data_chunk_1, data_chunk_2, len1, len2)))
-        {
-            if(len2 > 0)
-            {
-                write_offset = len2;
-            }
-            else
-            {
-                write_offset += len1;
-                unsigned int sound_length = get_length(FMOD_TIMEUNIT_PCM);
-                if(write_offset > sound_length)
-                {
-                    write_offset -= sound_length;
-                }
-            }
-            return write_offset;
-        }
-        return -2;
+    UtilityFunctions::push_warning("pushing data");
+    for(unsigned int i = 0; i < audio_data.size(); i++) {
+        buffer.push_back(audio_data.ptr()[i]);
     }
-    return -1;
-}*/
+}
+
+int FmodFile::pop_from_buffer(void* data, unsigned int datalen)
+{
+    int to_return = 0;
+    int empty_count = 0;
+    int buffered_count = 0;
+    char* c_data = (char*) data;
+    for(unsigned int i = 0; i < datalen; i++)
+    {
+        if(buffer.empty()) {
+            empty_count++;
+            to_return = -1;
+            c_data[i] = 0;
+        }
+        else
+        {
+            buffered_count++;
+            c_data[i] = (char) buffer.front();
+            buffer.pop_front();
+        }
+    }
+    char debug_string[128];
+    sprintf(debug_string, "popping data (empty %i, buffered %i)", empty_count, buffered_count);
+    UtilityFunctions::push_warning(debug_string);
+    return to_return;
+}
 
 /*TypedArray<PackedByteArray> FmodFile::lock(unsigned int offset, unsigned int length) const
 {
