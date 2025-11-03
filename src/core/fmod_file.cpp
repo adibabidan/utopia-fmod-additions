@@ -52,9 +52,9 @@ bool FmodFile::release() const
 
 void FmodFile::write_data(const PackedByteArray& audio_data)
 {
-    UtilityFunctions::push_warning("pushing data");
-    for(unsigned int i = 0; i < audio_data.size(); i++) {
-        buffer.push_back(audio_data.ptr()[i]);
+    uint16_t* audio_data_u16 = (uint16_t*) audio_data.ptr();
+    for(unsigned int i = 0; i < (audio_data.size()/2); i++) {
+        buffer.push_back(audio_data_u16[i]);
     }
 }
 
@@ -63,24 +63,24 @@ int FmodFile::pop_from_buffer(void* data, unsigned int datalen)
     int to_return = 0;
     int empty_count = 0;
     int buffered_count = 0;
-    char* c_data = (char*) data;
-    for(unsigned int i = 0; i < datalen; i++)
+    uint16_t* c_data = (uint16_t*) data;
+    for(unsigned int i = 0; i < (datalen/2); i+=2)
     {
         if(buffer.empty()) {
             empty_count++;
             to_return = -1;
             c_data[i] = 0;
+            c_data[i+1] = 0;
         }
         else
         {
             buffered_count++;
-            c_data[i] = (char) buffer.front();
+            uint16_t front = buffer.front();
+            c_data[i] = front;
+            c_data[i+1] = front;
             buffer.pop_front();
         }
     }
-    char debug_string[128];
-    sprintf(debug_string, "popping data (empty %i, buffered %i)", empty_count, buffered_count);
-    UtilityFunctions::push_warning(debug_string);
     return to_return;
 }
 

@@ -859,33 +859,31 @@ Ref<FmodFile> FmodServer::load_file_as_music(const String& path) {
     return cache->add_file(path, (FMOD_CREATESTREAM | FMOD_LOOP_NORMAL));
 }
 
-Ref<FmodFile> FmodServer::create_file_as_writable_sound(int sample_rate) {
+Ref<FmodFile> FmodServer::create_file_as_writable_sound(unsigned int sample_rate, float block_size) {
     FMOD::System* core = nullptr;
     ERROR_CHECK(system->getCoreSystem(&core));
 
-    UtilityFunctions::push_warning("in create file");
-
-    Ref<FmodFile> ref;// = FmodFile::create_ref(nullptr);
-
     // hard coded because steam audio always returns 1 channel 16 bit PCM
+    unsigned int one_second_in_bytes = sample_rate * sizeof(short) * 1; // sample_rate * sizeof(short) [16 bit] * 1 channel = 1 second of audio buffer
+
+    
     FMOD_CREATESOUNDEXINFO exinfo = {0};
     exinfo.cbsize           = sizeof(FMOD_CREATESOUNDEXINFO);
     exinfo.numchannels      = 1;
     exinfo.format           = FMOD_SOUND_FORMAT_PCM16;
     exinfo.defaultfrequency = sample_rate;
-    exinfo.length           = sample_rate * sizeof(short) * 1; // sample_rate * sizeof(short) [16 bit] * 1 channel = 1 second of audio buffer
+    exinfo.length           = one_second_in_bytes; 
     exinfo.pcmreadcallback  = Callbacks::pcm_read_callback;
-    //exinfo.userdata         = &ref;
+    exinfo.decodebuffersize = (unsigned int) (one_second_in_bytes * block_size);
 
     FMOD::Sound* sound = nullptr;
-    ERROR_CHECK_WITH_REASON(core->createSound("", (FMOD_OPENUSER | FMOD_LOOP_NORMAL), &exinfo, &sound), vformat("Cannot create writable sound"));
+    ERROR_CHECK_WITH_REASON(core->createSound("", (FMOD_OPENUSER | FMOD_LOOP_NORMAL | FMOD_CREATESTREAM), &exinfo, &sound), vformat("Cannot create writable sound"));
 
     if (sound) {
-        ref = FmodFile::create_ref(sound);
-        UtilityFunctions::push_warning("sound created");
+        Ref<FmodFile> ref = FmodFile::create_ref(sound);
         return ref;
     }
-    return ref;
+    return {};
 }
 
 void FmodServer::unload_file(const String& path) {

@@ -79,7 +79,7 @@ namespace godot {
         void set_volume(float volume);
         float get_volume() const;
 
-        Ref<FmodFile> setup_programmer_instrument_sound(unsigned int sample_rate);
+        Ref<FmodFile> setup_programmer_instrument_sound(unsigned int sample_rate, float block_size);
         // int write_to_programmer_instrument_sound(const PackedByteArray& audio_data);
         void set_programmer_callback(const Ref<FmodFile>& p_programmer_callback_file);
 
@@ -249,7 +249,6 @@ namespace godot {
             if (_event.is_null() || !_event->is_valid())
             {
                 _load_event();
-                UtilityFunctions::push_warning("loading event");
             }
 
             event = _event;
@@ -257,7 +256,6 @@ namespace godot {
 
         if (event.is_null()) {
             // No event loaded, nothing to do here
-            UtilityFunctions::push_warning("no event");
             return;
         }
 
@@ -266,7 +264,6 @@ namespace godot {
 
         set_space_attribute(event);
         if (_programmer_callback_file != nullptr) {
-            UtilityFunctions::push_warning("setting programmer callback");
             event->set_programmer_callback(_programmer_callback_file);
         }
 
@@ -562,15 +559,13 @@ namespace godot {
     }
 
     template<class Derived, class NodeType>
-    Ref<FmodFile> FmodEventEmitter<Derived, NodeType>::setup_programmer_instrument_sound(unsigned int sample_rate) {
+    Ref<FmodFile> FmodEventEmitter<Derived, NodeType>::setup_programmer_instrument_sound(unsigned int sample_rate, float block_size) {
        
-        Ref<FmodFile> sound = FmodServer::get_singleton()->create_file_as_writable_sound(sample_rate);
+        Ref<FmodFile> sound = FmodServer::get_singleton()->create_file_as_writable_sound(sample_rate, block_size);
         if(!sound.is_null())
         {
             _programmer_callback_file = sound->get_wrapped();
         }
-
-        UtilityFunctions::push_warning("out of create file");
 
         return sound;
     }
@@ -940,7 +935,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("is_preload_event"), &Derived::is_preload_event);
         ClassDB::bind_method(D_METHOD("get_volume"), &Derived::get_volume);
         ClassDB::bind_method(D_METHOD("set_volume", "p_volume"), &Derived::set_volume);
-        ClassDB::bind_method(D_METHOD("setup_programmer_instrument_sound", "sample_rate"), &Derived::setup_programmer_instrument_sound);
+        ClassDB::bind_method(D_METHOD("setup_programmer_instrument_sound", "sample_rate", "block_size"), &Derived::setup_programmer_instrument_sound);
         // ClassDB::bind_method(D_METHOD("write_to_programmer_instrument_sound", "audio_data"), &Derived::write_to_programmer_instrument_sound);
         ClassDB::bind_method(D_METHOD("set_programmer_callback", "p_programmers_callback_file"), &Derived::set_programmer_callback);
         ClassDB::bind_method(D_METHOD("_emit_callbacks", "dict", "type"), &Derived::_emit_callbacks);

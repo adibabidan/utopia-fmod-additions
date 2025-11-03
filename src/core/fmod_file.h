@@ -10,7 +10,7 @@ namespace godot {
         GDCLASS(FmodFile, RefCounted);
 
         FMOD::Sound* _wrapped = nullptr;
-        std::deque<char> buffer;
+        std::deque<uint16_t> buffer;
         unsigned int capacity = 0;
 
     public:

@@ -13,17 +13,12 @@
 namespace Callbacks {
 
     FMOD_RESULT F_CALL event_callback(FMOD_STUDIO_EVENT_CALLBACK_TYPE type, FMOD_STUDIO_EVENTINSTANCE* event, void* parameters) {
-        godot::String debug_string = godot::String("reached callback, ");
         auto* instance = reinterpret_cast<FMOD::Studio::EventInstance*>(event);
         godot::FmodEvent* event_instance;
         instance->getUserData((void**) &event_instance);
         if (event_instance) {
-            char debug_buffer [33];
-            itoa((int) type, debug_buffer, 16);
-            debug_string += godot::String("event good, int flag ") + godot::String(debug_buffer) + godot::String(": ");
             godot::Dictionary dictionary;
             if (type == FMOD_STUDIO_EVENT_CALLBACK_CREATE_PROGRAMMER_SOUND) {
-                debug_string += godot::String("create programmer sound");
                 const FMOD::Sound* sound {event_instance->get_programmer_callback_file()};
 
                 auto* props { reinterpret_cast<FMOD_STUDIO_PROGRAMMER_SOUND_PROPERTIES*>(parameters) };
@@ -31,28 +26,22 @@ namespace Callbacks {
                 props->sound = (FMOD_SOUND*) sound;
                 props->subsoundIndex = -1; // this is also hard coded and might need fixed if i ever do subsound stuff. i doubt it though
 
-                godot::UtilityFunctions::push_warning(debug_string);
-
                 return FMOD_OK;
             }
-            else if (type == FMOD_STUDIO_EVENT_CALLBACK_DESTROY_PROGRAMMER_SOUND) {
-                debug_string += godot::String("destroy programmer sound");
+            if (type == FMOD_STUDIO_EVENT_CALLBACK_DESTROY_PROGRAMMER_SOUND) {
                 auto* props { reinterpret_cast<FMOD_STUDIO_PROGRAMMER_SOUND_PROPERTIES*>(parameters) };
                 auto* sound {(FMOD::Sound*) props->sound};
 
                 ERROR_CHECK(sound->release());
 
-                godot::UtilityFunctions::push_warning(debug_string);
-
                 return FMOD_OK;
             }
-            else if (type == FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_MARKER) {
-                debug_string += godot::String("timeline marker");
+            if (type == FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_MARKER) {
                 auto* props { reinterpret_cast<FMOD_STUDIO_TIMELINE_MARKER_PROPERTIES*>(parameters) };
                 dictionary["name"] = props->name;
                 dictionary["position"] = props->position;
-            } else if (type == FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_BEAT) {
-                debug_string += godot::String("timeline beat");
+            }
+            else if (type == FMOD_STUDIO_EVENT_CALLBACK_TIMELINE_BEAT) {
                 auto* props { reinterpret_cast<FMOD_STUDIO_TIMELINE_BEAT_PROPERTIES*>(parameters) };
                 dictionary["beat"] = props->beat;
                 dictionary["bar"] = props->bar;
@@ -60,8 +49,6 @@ namespace Callbacks {
                 dictionary["time_signature_upper"] = props->timesignatureupper;
                 dictionary["time_signature_lower"] = props->timesignaturelower;
                 dictionary["position"] = props->position;
-            } else {
-                debug_string += godot::String("other");
             }
             const godot::Callable& callback {event_instance->get_callback()};
             if (!callback.is_null() && callback.is_valid()) {
@@ -75,8 +62,6 @@ namespace Callbacks {
             }
         }
 
-        godot::UtilityFunctions::push_warning(debug_string);
-
         return FMOD_OK;
     }
 
@@ -85,9 +70,8 @@ namespace Callbacks {
         godot::FmodFile* file;
         sound->getUserData((void**) &file);
         if(file){
-            if(file->pop_from_buffer(data, datalen) != 0) { godot::UtilityFunctions::push_error("pcmreadcallback called with insufficient audio buffer"); }
+            file->pop_from_buffer(data, datalen);
         }
-        else { godot::UtilityFunctions::push_warning("pcm bad userdata"); }
         return FMOD_OK;
     }
 }// namespace Callbacks
