@@ -866,13 +866,12 @@ Ref<FmodFile> FmodServer::create_file_as_writable_sound(unsigned int sample_rate
     // hard coded because steam audio always returns 1 channel 16 bit PCM
     unsigned int one_second_in_bytes = sample_rate * sizeof(short) * 1; // sample_rate * sizeof(short) [16 bit] * 1 channel = 1 second of audio buffer
 
-    
     FMOD_CREATESOUNDEXINFO exinfo = {0};
     exinfo.cbsize           = sizeof(FMOD_CREATESOUNDEXINFO);
     exinfo.numchannels      = 1;
     exinfo.format           = FMOD_SOUND_FORMAT_PCM16;
     exinfo.defaultfrequency = sample_rate;
-    exinfo.length           = one_second_in_bytes; 
+    exinfo.length           = one_second_in_bytes;
     exinfo.pcmreadcallback  = Callbacks::pcm_read_callback;
     exinfo.decodebuffersize = (unsigned int) (one_second_in_bytes * block_size);
 

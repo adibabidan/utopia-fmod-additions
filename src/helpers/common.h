@@ -13,6 +13,8 @@
 #include <godot.hpp>
 #include <variant/utility_functions.hpp>
 
+#include <cstdio>
+
 #define MAX_PATH_SIZE 512
 #define MAX_DRIVER_NAME_SIZE 256
 

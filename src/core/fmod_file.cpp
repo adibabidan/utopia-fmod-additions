@@ -61,20 +61,16 @@ void FmodFile::write_data(const PackedByteArray& audio_data)
 int FmodFile::pop_from_buffer(void* data, unsigned int datalen)
 {
     int to_return = 0;
-    int empty_count = 0;
-    int buffered_count = 0;
     uint16_t* c_data = (uint16_t*) data;
     for(unsigned int i = 0; i < (datalen/2); i+=2)
     {
         if(buffer.empty()) {
-            empty_count++;
             to_return = -1;
             c_data[i] = 0;
             c_data[i+1] = 0;
         }
         else
         {
-            buffered_count++;
             uint16_t front = buffer.front();
             c_data[i] = front;
             c_data[i+1] = front;
